@@ -17,7 +17,9 @@
 #define TRUE 1
 #define MAX_JUGADORES 4
 #define MAX_NOMBRE 20
-#define MAX_CODIGO 5
+#define MAX_CODIGO 4
+
+pthread_mutex_t semaforo, semaforo2;
 
 int hilos = 0;
 
@@ -71,6 +73,7 @@ void sigchld() {
 }
 
 void *servicio(void *sock) {
+    pthread_mutex_lock(&semaforo);
     int client_sock = *(int *)sock;
     ssize_t n, m;
     char line[MAXLINE];
@@ -100,6 +103,7 @@ void *servicio(void *sock) {
         printf("%s", jugadores[i].codigo);
         printf("\n");
     }
+    pthread_mutex_unlock(&semaforo);
 }
 
 int main(int argc, char *argv[]) {
@@ -143,8 +147,10 @@ int main(int argc, char *argv[]) {
             close(sock_servicio[hilos]);
         } else {
             fprintf(stdout, "Servicio aceptado: %d\n", hilos);
-            pthread_create(&t1[hilos], NULL, servicio, &sock_servicio[hilos]);
+            pthread_create(&t1[hilos], NULL, servicio, &sock_servicio[hilos]);     
+            pthread_mutex_lock(&semaforo);      
             hilos++;
+            pthread_mutex_unlock(&semaforo);
             clientes_conectados++;
         }
 
