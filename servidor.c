@@ -15,6 +15,18 @@
 #define PORT 2222
 #define MAXLINE 4096
 #define TRUE 1
+#define MAX_JUGADORES 4
+#define MAX_NOMBRE 20
+#define MAX_CODIGO 5
+
+int hilos = 0;
+
+struct Jugador {
+    char nombre[MAX_NOMBRE];
+    char codigo[MAX_CODIGO];
+};
+
+struct Jugador jugadores[MAX_JUGADORES];
 
 int sock_servicio[10];
 
@@ -60,34 +72,42 @@ void sigchld() {
 
 void *servicio(void *sock) {
     int client_sock = *(int *)sock;
-    ssize_t n,m;
+    ssize_t n, m;
     char line[MAXLINE];
 
     // Bienvenida
-    const char *mensaje_Bienvenida= "Bienvenido a picas y fijas\n";
+    const char *mensaje_Bienvenida = "Bienvenido a picas y fijas\n";
     write(client_sock, mensaje_Bienvenida, strlen(mensaje_Bienvenida));
-    //leer nombre del cliente
+
+    // Leer nombre del cliente
     n = read(client_sock, line, MAXLINE - 1);
     line[n] = '\0';
     printf("Nombre del cliente: %s\n", line);
-    //leer numero del cliente
+
+    strncpy(jugadores[hilos-1].nombre, line, MAX_NOMBRE);  // Guardar nombre del jugador
+
+    // Leer código del cliente
     m = read(client_sock, line, MAXLINE - 1);
     line[m] = '\0';
-    printf("Nombre del cliente: %s\n", line);
+    printf("Código del cliente: %s\n", line);
 
+    strncpy(jugadores[hilos-1].codigo, line, MAX_CODIGO);  // Guardar código del jugador
 
-
+    // imprimir arreglo
+    for(int i=0; i<4; i++){
+        printf("%s", jugadores[i].nombre);
+        printf("|");
+        printf("%s", jugadores[i].codigo);
+        printf("\n");
+    }
 }
 
-
 int main(int argc, char *argv[]) {
-    char nombres[4];
     int sock_escucha;
     struct sockaddr_in adr;
     int lgadr = sizeof(adr);
     int port = PORT;
     pthread_t t1[10];
-    int hilos = 0;
     int clientes_conectados = 0;
     int max_clientes = 4;
     int finalizar = 0;
@@ -118,11 +138,10 @@ int main(int argc, char *argv[]) {
         sock_servicio[hilos] = accept(sock_escucha, (struct sockaddr *)&adr, &lgadr);
 
         if (clientes_conectados >= max_clientes) {
-            const char *mensaje = "Cantidad de jugadores máximo conectados\n";
+            const char *mensaje = "Cantidad de jugadores máxima conectada\n";
             write(sock_servicio[hilos], mensaje, strlen(mensaje));
             close(sock_servicio[hilos]);
         } else {
-      
             fprintf(stdout, "Servicio aceptado: %d\n", hilos);
             pthread_create(&t1[hilos], NULL, servicio, &sock_servicio[hilos]);
             hilos++;
@@ -130,12 +149,12 @@ int main(int argc, char *argv[]) {
         }
 
         if (clientes_conectados >= max_clientes) {
-            const char *mensaje = "Cantidad de jugadores máximo conectados\n";
+            const char *mensaje = "Cantidad de jugadores máxima conectada\n";
             write(sock_servicio[hilos], mensaje, strlen(mensaje));
         }
     }
 
-    close(sock_escucha); // Cerrar el socket de escucha después del bucle
+    close(sock_escucha);  // Cerrar el socket de escucha después del bucle
 
     return 0;
 }
