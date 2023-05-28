@@ -90,26 +90,38 @@ void solicitarNombre(char *nombre) {
 
 
 int validarDigitos(const char *numero) {
-    int digitos[10] = {0}; 
+    int digitos[10] = {0};
     int longitud = strlen(numero);
-    if (longitud == 4){
+    if (longitud == 4) {
+        // Verificar que todos los caracteres sean dígitos
         for (int i = 0; i < longitud; i++) {
-            if (numero[i] >= '0' && numero[i] <= '9') {
-                int digito = numero[i] - '0'; //convertir a int
-                digitos[digito]++;  // Incrementar el contador del dígito
-                if (digitos[digito] > 1) {
-                    return 1;  // Dígito repetido encontrado
-                }
+            if (numero[i] < '0' || numero[i] > '9') {
+                return 3;  // Carácter no válido encontrado
             }
         }
-       return 0;  // No se encontraron dígitos repetidos
+        
+        // Verificar que el primer dígito sea diferente de 0
+        if (numero[0] == '0') {
+            return 4;  // El primer dígito es 0
+        }
+        
+        // Contar los dígitos y verificar si hay repetidos
+        for (int i = 0; i < longitud; i++) {
+            int digito = numero[i] - '0'; // Convertir a int
+            digitos[digito]++;  // Incrementar el contador del dígito
+            if (digitos[digito] > 1) {
+                return 1;  // Dígito repetido encontrado
+            }
+        }
+        
+        return 0;  // No se encontraron dígitos repetidos
+    } else {
+        return 2; // Cantidad de dígitos inválida
     }
-    else return 2; //Cantidad de dígitos inválida 
 }
 
 void solicitarNumero(char *numero) {
     int repeticion = 0;
-
     do {
         printf("Ingresa el numero: ");
         fgets(numero, MAXLINE, stdin);
@@ -119,7 +131,13 @@ void solicitarNumero(char *numero) {
             if (repeticion == 1){
                 printf("Error: Los digitos no deben repetirse. Intenta nuevamente.\n");
             }
-            else printf("Error: Cantidad de dígitos inválida. Intenta nuevamente.\n");
+            else if (repeticion==2){
+                printf("Error: Cantidad de dígitos inválida. Intenta nuevamente.\n");
+            }else if(repeticion==3){
+                printf("Error: Se ingresaron caracteres, deben ser digitos. Intenta nuevamente.\n");
+            }else{
+                printf("Error: Primer digito debe ser diferente de 0. Intenta nuevamente.\n");
+            }
         }
     } while (repeticion);//sale cuando el return es 0 
 }
