@@ -18,7 +18,7 @@
 #define TRUE 1
 #define MAX_JUGADORES 4
 #define MAX_NOMBRE 20
-#define MAX_CODIGO 4
+#define MAX_CODIGO 5
 
 pthread_mutex_t semaforo, semaforo2;
 
@@ -100,6 +100,26 @@ void validarRepetido(const char *codigo)
     return;
 }
 
+// void validarNumJugadores() {
+
+//     const char *mensaje_Inicio = "Jugadores completos, el juego ha iniciado\n";
+//     int contador = 0;
+//     for (int i = 0; i < MAX_JUGADORES; i++) {
+//         if (jugadores[i].codigo != 0) {
+//             contador++;
+//         }
+//         if(contador==4){printf("inicio de juego\n");}
+//     }
+
+//     if(contador==4){
+//         for(int o=0; o<MAX_JUGADORES; o++){
+
+//             int sock =*(int *)sock_servicio[o];
+//             write(sock, mensaje_Inicio, strlen(mensaje_Inicio));
+//         }
+//     }
+// }
+
 void *servicio(void *sock)
 {
     pthread_mutex_lock(&semaforo);
@@ -158,7 +178,27 @@ void *servicio(void *sock)
         printf("%s", jugadores[i].codigo);
         printf("\n");
     }
+
     pthread_mutex_unlock(&semaforo);
+    const char *mensaje_Inicio = "Jugadores completos, el juego ha iniciado\n";
+    int contador = 0;
+    for (int i = 0; i < MAX_JUGADORES; i++)
+    {
+        if (strlen(jugadores[i].codigo)==4)
+        {
+            contador++;
+        }
+    }
+
+    if (contador == 4)
+    {
+        for(int o=0; o<MAX_JUGADORES; o++){
+
+            write(sock_servicio[o], mensaje_Inicio, strlen(mensaje_Inicio));
+        }
+    }
+    read(client_sock, line, MAXLINE - 1);
+    line[m] = '\0';
 }
 
 int main(int argc, char *argv[])

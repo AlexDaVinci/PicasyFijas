@@ -89,8 +89,8 @@ void str_echo(int sock)
     int n;
     while (1)
     {
-        fgets(sendline, MAXLINE, stdin);
-        write(sock, sendline, strlen(sendline));
+        // fgets(sendline, MAXLINE, stdin);
+        // write(sock, sendline, strlen(sendline));
         if (read(sock, recvline, MAXLINE) == 0)
         {
             fprintf(stderr, "Servidor terminado prematuramente\n");
