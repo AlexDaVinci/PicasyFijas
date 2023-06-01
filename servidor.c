@@ -29,6 +29,7 @@ struct Jugador
 {
     char nombre[MAX_NOMBRE];
     char codigo[MAX_CODIGO];
+    int turno;
 };
 
 struct Jugador jugadores[MAX_JUGADORES];
@@ -100,25 +101,50 @@ void validarRepetido(const char *codigo)
     return;
 }
 
-// void validarNumJugadores() {
+void validarNumJugadores() {
 
-//     const char *mensaje_Inicio = "Jugadores completos, el juego ha iniciado\n";
-//     int contador = 0;
-//     for (int i = 0; i < MAX_JUGADORES; i++) {
-//         if (jugadores[i].codigo != 0) {
-//             contador++;
-//         }
-//         if(contador==4){printf("inicio de juego\n");}
-//     }
+const char *mensaje_Inicio = "Jugadores completos, el juego ha iniciado\n";
+    int contador = 0;
+    for (int i = 0; i < MAX_JUGADORES; i++)
+    {
+        if (strlen(jugadores[i].codigo)==4)
+        {
+            contador++;
+        }
+    }
 
-//     if(contador==4){
-//         for(int o=0; o<MAX_JUGADORES; o++){
+    if (contador == 4)
+    {
+        for(int o=0; o<MAX_JUGADORES; o++){
 
-//             int sock =*(int *)sock_servicio[o];
-//             write(sock, mensaje_Inicio, strlen(mensaje_Inicio));
-//         }
-//     }
-// }
+            write(sock_servicio[o], mensaje_Inicio, strlen(mensaje_Inicio));
+        }
+    }
+}
+
+
+void asignarTurno(int posicion)
+{
+    srand(time(0)); // Semilla para generar números aleatorios
+
+    for (int i = 0; i < MAX_JUGADORES; i++) {
+        int numero;
+        int repetido;
+
+        do {
+            repetido = 0;
+            numero = rand() % 4 + 1; // Genera un número aleatorio entre 1 y 4
+
+            for (int j = 0; j < i; j++) {
+                if (jugadores[j].turno == numero) {
+                    repetido = 1;
+                    break;
+                }
+            }
+        } while (repetido); // Repite el proceso si el número está repetido
+        jugadores[posicion].turno=numero;
+    }
+}
 
 void *servicio(void *sock)
 {
@@ -147,6 +173,7 @@ void *servicio(void *sock)
         write(client_sock, mensaje_Error, strlen(mensaje_Error));
         printf("Código del cliente: %s\n", line);
         strncpy(jugadores[hilos - 1].codigo, line, MAX_CODIGO); // Guardar código del jugador
+        asignarTurno(hilos-1);
     }
     else
     {
@@ -168,6 +195,7 @@ void *servicio(void *sock)
         write(client_sock, mensaje_Error, strlen(mensaje_Error));
         printf("Código del cliente: %s\n", line);
         strncpy(jugadores[hilos - 1].codigo, line, MAX_CODIGO); // Guardar código del jugador
+        asignarTurno(hilos-1);
     }
 
     // imprimir arreglo
@@ -176,27 +204,17 @@ void *servicio(void *sock)
         printf("%s", jugadores[i].nombre);
         printf("|");
         printf("%s", jugadores[i].codigo);
+        printf("|");
+        printf("%d", jugadores[i].turno);
         printf("\n");
     }
 
     pthread_mutex_unlock(&semaforo);
-    const char *mensaje_Inicio = "Jugadores completos, el juego ha iniciado\n";
-    int contador = 0;
-    for (int i = 0; i < MAX_JUGADORES; i++)
-    {
-        if (strlen(jugadores[i].codigo)==4)
-        {
-            contador++;
-        }
-    }
+    
+    validarNumJugadores();
 
-    if (contador == 4)
-    {
-        for(int o=0; o<MAX_JUGADORES; o++){
+    
 
-            write(sock_servicio[o], mensaje_Inicio, strlen(mensaje_Inicio));
-        }
-    }
     read(client_sock, line, MAXLINE - 1);
     line[m] = '\0';
 }
