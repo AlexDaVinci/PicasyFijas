@@ -21,7 +21,7 @@ int main(int argc, char *argv[])
     char com[SIZE];
     struct sockaddr_in adr;
     struct hostent *hp, *gethostbyname();
-    int n, error;
+    int n, m, error;
     char recvline[MAXLINE];
     char nombre[MAXLINE];
     char numero[MAXLINE];
@@ -69,16 +69,28 @@ int main(int argc, char *argv[])
         n = read(sock, recvline, MAXLINE - 1);
         recvline[n] = '\0';
         error = atoi(recvline);
-        
+
         if (error == 0)
         {
             printf("Este numero ya fue ingresado \n");
         }
-        
 
     } while (error == 0);
 
     str_echo(sock);
+
+    do
+    {
+        m = read(sock, recvline, MAXLINE - 1);
+        recvline[m] = '\0';
+        error = atoi(recvline);
+        if (error == 3)
+        {
+            //printf("Es su turno\n");
+            solicitarNumero(numero);
+            // write(sock, numero, strlen(numero));
+        }
+    } while (1);
 
     return 0;
 }
