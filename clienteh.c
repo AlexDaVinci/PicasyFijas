@@ -1,5 +1,4 @@
 #include <stdio.h>
-#include <pthread.h>
 #include <stdlib.h>
 #include <sys/types.h>
 #include <sys/socket.h>
@@ -15,7 +14,6 @@ void str_echo(int sock);
 void solicitarNombre(char *nombre);
 void solicitarNumero(char *nombre);
 int validarDigitos(const char *numero);
-pthread_mutex_t semaforo, semaforo2;
 
 int main(int argc, char *argv[])
 {
@@ -24,11 +22,9 @@ int main(int argc, char *argv[])
     struct sockaddr_in adr;
     struct hostent *hp, *gethostbyname();
     int n, error;
-    char m,h;
     char recvline[MAXLINE];
     char nombre[MAXLINE];
     char numero[MAXLINE];
-
     if (argc != 3)
     {
         fprintf(stderr, "Uso: %s <host> <port>\n", argv[0]);
@@ -83,31 +79,19 @@ int main(int argc, char *argv[])
     } while (error == 0);
 
     //str_echo(sock);
-    char nombrej[100];
-    char *code;
-    int hablo=0;
-    for (;;) {   
-        pthread_mutex_lock(&semaforo);
+    
+    for (;;) {
         n = read(sock, recvline, MAXLINE - 1);
         recvline[n] = '\0';
         error = atoi(recvline);
-         printf("\n");
+        printf("error:%s\n",recvline);
         if (error == 6) {
-            printf("Es su turno ");
+            printf("Es su turno\n");
             solicitarNumero(numero);
             write(sock, numero, strlen(numero));
-            hablo=1;
         }else{
             printf("En espera\n");
-            if(hablo==1){
-                h = read(sock, recvline, MAXLINE - 1);
-                recvline[h] = '\0';
-                strcpy(nombrej, recvline); 
-                printf("mensaje: %s\n", nombrej);
-            }
         }
-        pthread_mutex_unlock(&semaforo);
-        
     }
 
     return 0;

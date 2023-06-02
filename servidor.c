@@ -160,23 +160,16 @@ int validarTurno(){
         }
     }
 }
-char buffer[100];
 
 int picasyfijas(){
-    int validado=0;
+    int validado=0; 
     validado=validarNumJugadores();
-    int mturno=0;
+    int mturno=0,m;
     int turno_desbloqueado=1;
-    const char* nombrej="";
-    const char* code="";
-
-    int hablo = 0; // Inicializar hablo en 0
-
     if (validado == 1) {
         while (1) {
             if (turno_desbloqueado) {
-                pthread_mutex_lock(&semaforo);
-                turno_desbloqueado = 0;
+                turno_desbloqueado=0;
                 mturno = validarTurno();
                 const char *mensaje_turno = "6";
                 write(sock_servicio[mturno], mensaje_turno, strlen(mensaje_turno));
@@ -185,21 +178,18 @@ int picasyfijas(){
                 char line[MAXLINE];
                 int m = read(sock_servicio[mturno], line, MAXLINE - 1);
                 line[m] = '\0';
-                nombrej = jugadores[mturno].nombre;
-                code = line;
-                strcpy(buffer, nombrej);
-                strcat(buffer, code);
-                for (int i = 0; i < 4; i++) {
-                    if (i != mturno) {
-                        write(sock_servicio[i], buffer, strlen(buffer));
-                    }
-                }
                 printf("El jugador %s ingresó el código: %s\n", jugadores[mturno].nombre, line);
-                pthread_mutex_unlock(&semaforo);
+                
+                const char *mensaje = "A";
+                for (m=0;m<4;m++)
+                    write(sock_servicio[m], mensaje, strlen(mensaje));
+
+            
             }
-            const char *mensaje_turno = "7";
+
+            const char *mensaje_turno = "0";
             write(sock_servicio[mturno], mensaje_turno, strlen(mensaje_turno));
-            turno_desbloqueado = 1;
+            turno_desbloqueado=1;
         }
     }
 
