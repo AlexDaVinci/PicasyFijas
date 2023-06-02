@@ -24,22 +24,18 @@ pthread_mutex_t semaforo, semaforo2;
 
 int hilos = 0;
 int validar = 1;
+int rturno=0;
 
 struct Jugador
 {
     char nombre[MAX_NOMBRE];
     char codigo[MAX_CODIGO];
+    int turno;
 };
 
 struct Jugador jugadores[MAX_JUGADORES];
 
-struct Socks
-{
-    int sockId;
-    int turno;
-};
-
-struct Socks sock_servicio[MAX_JUGADORES];
+int sock_servicio[10];
 
 int crearsocket(int *port, int type)
 {
@@ -106,13 +102,13 @@ void validarRepetido(const char *codigo)
     return;
 }
 
-void validarNumJugadores()
-{
-    const char *mensaje_Inicio = "4\n";
+int validarNumJugadores() {
+
+const char *mensaje_Inicio = "Jugadores completos, el juego ha iniciado\n";
     int contador = 0;
     for (int i = 0; i < MAX_JUGADORES; i++)
     {
-        if (strlen(jugadores[i].codigo) == 4)
+        if (strlen(jugadores[i].codigo)==4)
         {
             contador++;
         }
@@ -120,58 +116,93 @@ void validarNumJugadores()
 
     if (contador == 4)
     {
-        for (int o = 0; o < MAX_JUGADORES; o++)
-        {
-            write(sock_servicio[o].sockId, mensaje_Inicio, strlen(mensaje_Inicio));
+        for(int o=0; o<MAX_JUGADORES; o++){
+
+            write(sock_servicio[o], mensaje_Inicio, strlen(mensaje_Inicio));
         }
+        return 1;
     }
 }
+
 
 void asignarTurno(int posicion)
 {
     srand(time(0)); // Semilla para generar números aleatorios
 
-    for (int i = 0; i < MAX_JUGADORES; i++)
-    {
+    for (int i = 0; i < MAX_JUGADORES; i++) {
         int numero;
         int repetido;
 
-        do
-        {
+        do {
             repetido = 0;
             numero = rand() % 4 + 1; // Genera un número aleatorio entre 1 y 4
 
-            for (int j = 0; j < i; j++)
-            {
-                if (sock_servicio[j].turno == numero)
-                {
+            for (int j = 0; j < i; j++) {
+                if (jugadores[j].turno == numero) {
                     repetido = 1;
                     break;
                 }
             }
         } while (repetido); // Repite el proceso si el número está repetido
-        sock_servicio[posicion].turno = numero;
+        jugadores[posicion].turno=numero;
     }
 }
 
-void turnoEnJuego()
-{
-    const char *Turno = "3";
-    int turno = 1, jugando;
-    ssize_t n;
-    char line[MAXLINE];
-
-    for (int i = 0; i < MAX_JUGADORES; i++)
-    {
-
-        if (sock_servicio[i].turno == turno)
-        {
-            //write(sock_servicio[i].sockId, Turno, strlen(Turno));
-            // n = read(sock_servicio[i].sockId, line, MAXLINE - 1);
-            // line[n] = '\0';
-            turno++;
+int validarTurno(){
+    if(rturno==4){
+        rturno=1;
+    }else{
+        rturno++;
+    }
+    for(int i=0; i<MAX_JUGADORES; i++){
+        if(jugadores[i].turno==rturno){
+            return i;
         }
     }
+}
+char buffer[100];
+
+int picasyfijas(){
+    int validado=0;
+    validado=validarNumJugadores();
+    int mturno=0;
+    int turno_desbloqueado=1;
+    const char* nombrej="";
+    const char* code="";
+
+    int hablo = 0; // Inicializar hablo en 0
+
+    if (validado == 1) {
+        while (1) {
+            if (turno_desbloqueado) {
+                pthread_mutex_lock(&semaforo);
+                turno_desbloqueado = 0;
+                mturno = validarTurno();
+                const char *mensaje_turno = "6";
+                write(sock_servicio[mturno], mensaje_turno, strlen(mensaje_turno));
+
+                // Leer el código del cliente
+                char line[MAXLINE];
+                int m = read(sock_servicio[mturno], line, MAXLINE - 1);
+                line[m] = '\0';
+                nombrej = jugadores[mturno].nombre;
+                code = line;
+                strcpy(buffer, nombrej);
+                strcat(buffer, code);
+                for (int i = 0; i < 4; i++) {
+                    if (i != mturno) {
+                        write(sock_servicio[i], buffer, strlen(buffer));
+                    }
+                }
+                printf("El jugador %s ingresó el código: %s\n", jugadores[mturno].nombre, line);
+                pthread_mutex_unlock(&semaforo);
+            }
+            const char *mensaje_turno = "7";
+            write(sock_servicio[mturno], mensaje_turno, strlen(mensaje_turno));
+            turno_desbloqueado = 1;
+        }
+    }
+
 }
 
 void *servicio(void *sock)
@@ -180,6 +211,7 @@ void *servicio(void *sock)
     int client_sock = *(int *)sock;
     ssize_t n, m;
     char line[MAXLINE];
+    
 
     // Bienvenida
     const char *mensaje_Bienvenida = "Bienvenido a picas y fijas\n";
@@ -201,12 +233,13 @@ void *servicio(void *sock)
         write(client_sock, mensaje_Error, strlen(mensaje_Error));
         printf("Código del cliente: %s\n", line);
         strncpy(jugadores[hilos - 1].codigo, line, MAX_CODIGO); // Guardar código del jugador
-        asignarTurno(hilos - 1);
+        asignarTurno(hilos-1);
     }
     else
     {
         do
         {
+
             m = read(client_sock, line, MAXLINE - 1);
             line[m] = '\0';
             validarRepetido(line);
@@ -222,7 +255,7 @@ void *servicio(void *sock)
         write(client_sock, mensaje_Error, strlen(mensaje_Error));
         printf("Código del cliente: %s\n", line);
         strncpy(jugadores[hilos - 1].codigo, line, MAX_CODIGO); // Guardar código del jugador
-        asignarTurno(hilos - 1);
+        asignarTurno(hilos-1);
     }
 
     // imprimir arreglo
@@ -232,20 +265,11 @@ void *servicio(void *sock)
         printf("|");
         printf("%s", jugadores[i].codigo);
         printf("|");
-        printf("%d", sock_servicio[i].turno);
-        printf("|");
-        printf("%d", sock_servicio[i].sockId);
+        printf("%d", jugadores[i].turno);
         printf("\n");
     }
-
-    pthread_mutex_unlock(&semaforo);
-
-    validarNumJugadores();
-
-    turnoEnJuego();
-
-    n = read(client_sock, line, MAXLINE - 1);
-    line[n] = '\0';
+    pthread_mutex_unlock(&semaforo); 
+    picasyfijas();
 }
 
 int main(int argc, char *argv[])
@@ -285,18 +309,18 @@ int main(int argc, char *argv[])
             break;
 
         lgadr = sizeof(adr);
-        sock_servicio[hilos].sockId = accept(sock_escucha, (struct sockaddr *)&adr, &lgadr);
+        sock_servicio[hilos] = accept(sock_escucha, (struct sockaddr *)&adr, &lgadr);
 
         if (clientes_conectados >= max_clientes)
         {
             const char *mensaje = "Cantidad de jugadores máxima conectada\n";
-            write(sock_servicio[hilos].sockId, mensaje, strlen(mensaje));
-            close(sock_servicio[hilos].sockId);
+            write(sock_servicio[hilos], mensaje, strlen(mensaje));
+            close(sock_servicio[hilos]);
         }
         else
         {
             fprintf(stdout, "Servicio aceptado: %d\n", hilos);
-            pthread_create(&t1[hilos], NULL, servicio, &sock_servicio[hilos].sockId);
+            pthread_create(&t1[hilos], NULL, servicio, &sock_servicio[hilos]);
             pthread_mutex_lock(&semaforo);
             hilos++;
             pthread_mutex_unlock(&semaforo);
@@ -306,7 +330,7 @@ int main(int argc, char *argv[])
         if (clientes_conectados >= max_clientes)
         {
             const char *mensaje = "Cantidad de jugadores máxima conectada\n";
-            write(sock_servicio[hilos].sockId, mensaje, strlen(mensaje));
+            write(sock_servicio[hilos], mensaje, strlen(mensaje));
         }
     }
 

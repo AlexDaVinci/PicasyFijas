@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include <pthread.h>
 #include <stdlib.h>
 #include <sys/types.h>
 #include <sys/socket.h>
@@ -14,6 +15,7 @@ void str_echo(int sock);
 void solicitarNombre(char *nombre);
 void solicitarNumero(char *nombre);
 int validarDigitos(const char *numero);
+pthread_mutex_t semaforo, semaforo2;
 
 int main(int argc, char *argv[])
 {
@@ -21,10 +23,12 @@ int main(int argc, char *argv[])
     char com[SIZE];
     struct sockaddr_in adr;
     struct hostent *hp, *gethostbyname();
-    int n, m, error;
+    int n, error;
+    char m,h;
     char recvline[MAXLINE];
     char nombre[MAXLINE];
     char numero[MAXLINE];
+
     if (argc != 3)
     {
         fprintf(stderr, "Uso: %s <host> <port>\n", argv[0]);
@@ -69,28 +73,42 @@ int main(int argc, char *argv[])
         n = read(sock, recvline, MAXLINE - 1);
         recvline[n] = '\0';
         error = atoi(recvline);
-
+        
         if (error == 0)
         {
             printf("Este numero ya fue ingresado \n");
         }
+        
 
     } while (error == 0);
 
-    str_echo(sock);
-
-    do
-    {
-        m = read(sock, recvline, MAXLINE - 1);
-        recvline[m] = '\0';
+    //str_echo(sock);
+    char nombrej[100];
+    char *code;
+    int hablo=0;
+    for (;;) {   
+        pthread_mutex_lock(&semaforo);
+        n = read(sock, recvline, MAXLINE - 1);
+        recvline[n] = '\0';
         error = atoi(recvline);
-        if (error == 3)
-        {
-            //printf("Es su turno\n");
+         printf("\n");
+        if (error == 6) {
+            printf("Es su turno ");
             solicitarNumero(numero);
-            // write(sock, numero, strlen(numero));
+            write(sock, numero, strlen(numero));
+            hablo=1;
+        }else{
+            printf("En espera\n");
+            if(hablo==1){
+                h = read(sock, recvline, MAXLINE - 1);
+                recvline[h] = '\0';
+                strcpy(nombrej, recvline); 
+                printf("mensaje: %s\n", nombrej);
+            }
         }
-    } while (1);
+        pthread_mutex_unlock(&semaforo);
+        
+    }
 
     return 0;
 }
