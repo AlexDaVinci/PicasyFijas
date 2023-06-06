@@ -203,6 +203,7 @@ void enviar(int socket, const char *mensaje){
 }
 
 char mensajecode[8094];
+char mensajepf[8094];
 
 int picasyfijas(){
     int validado=0; 
@@ -214,33 +215,43 @@ int picasyfijas(){
             if (turno_desbloqueado) {
                 turno_desbloqueado=0;
                 mturno = validarTurno();
-                const char *mensaje_turno = "6";
-                enviar(mturno, mensaje_turno);
+                for (m=0;m<4;m++){
+                    if(m!=mturno){
+                        const char *mensaje_turno = "1";
+                         enviar(m, mensaje_turno);
+                    }else{
+                        const char *mensaje_turno = "6";
+                        enviar(mturno, mensaje_turno);
+                    }
+                }                
                 //write(sock_servicio[mturno], mensaje_turno, strlen(mensaje_turno));
-
                 // Leer el código del cliente
                 char line[MAXLINE];
                 int m = read(sock_servicio[mturno], line, MAXLINE - 1);
                 line[m] = '\0';
                 printf("El jugador %s ingresó el código: %s\n", jugadores[mturno].nombre, line);
-                for (m=0;m<4;m++){
-                    if(m!=mturno){                  
-                        jugadores[m].picas=calcularPicas(line, jugadores[m].codigo);
-                        jugadores[m].fijas=calcularFijas(line, jugadores[m].codigo);
-                        printf("has tenido %d picas y %d fijas con el jugador %s\n",jugadores[m].picas,jugadores[m].fijas,jugadores[m].nombre);
-                    }
-                }
-                
+
+                                
                 sprintf(mensajecode, "el jugador %s puso el codigo %s", jugadores[mturno].nombre, line);
                 for (m=0;m<4;m++){
                     if(m!=mturno){
                         write(sock_servicio[m], mensajecode, strlen(mensajecode));
                     }
                 }
-            }
 
-            const char *mensaje_turno = "0";
-            write(sock_servicio[mturno], mensaje_turno, strlen(mensaje_turno));
+                for (m=0;m<4;m++){
+                    if(m!=mturno){                  
+                        jugadores[m].picas=calcularPicas(line, jugadores[m].codigo);
+                        jugadores[m].fijas=calcularFijas(line, jugadores[m].codigo);
+                        printf("%s ha tenido %d picas y %d fijas con el jugador %s\n",jugadores[mturno].nombre,jugadores[m].picas,jugadores[m].fijas,jugadores[m].nombre);
+                        sprintf(mensajepf, "%s ha tenido %d picas y %d fijas con el jugador %s\n",jugadores[mturno].nombre,jugadores[m].picas,jugadores[m].fijas,jugadores[m].nombre);
+                        write(sock_servicio[m], mensajepf, strlen(mensajepf));
+                        write(sock_servicio[mturno], mensajepf, strlen(mensajepf));
+                    }
+                    
+                }
+
+            }
             turno_desbloqueado=1;
         }
     }
