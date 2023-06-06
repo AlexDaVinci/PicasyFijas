@@ -79,12 +79,18 @@ int main(int argc, char *argv[])
     } while (error == 0);
 
     //str_echo(sock);
-    
+    printf("\n");
+    n = read(sock, recvline, MAXLINE - 1);
+    recvline[n] = '\0';
+    printf("%s\n",recvline);
+
     for (;;) {
         n = read(sock, recvline, MAXLINE - 1);
         recvline[n] = '\0';
         error = atoi(recvline);
-        printf("error:%s\n",recvline);
+        printf("\n");
+        printf("%s\n",recvline);
+        printf("\n");
         if (error == 6) {
             printf("Es su turno\n");
             solicitarNumero(numero);

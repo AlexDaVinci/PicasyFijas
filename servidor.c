@@ -30,6 +30,8 @@ struct Jugador
 {
     char nombre[MAX_NOMBRE];
     char codigo[MAX_CODIGO];
+    int picas;
+    int fijas;
     int turno;
 };
 
@@ -161,6 +163,47 @@ int validarTurno(){
     }
 }
 
+int calcularPicas(const char *codigoJugador, const char *codigoOponente)
+{
+    int picas = 0;
+    int longitud = strlen(codigoJugador);
+
+    for (int i = 0; i < longitud; i++)
+    {
+        for (int j = 0; j < longitud; j++)
+        {
+            if (codigoJugador[i] == codigoOponente[j] && i != j)
+            {
+                picas++;
+            }
+        }
+    }
+
+    return picas;
+}
+
+int calcularFijas(const char *codigoJugador, const char *codigoOponente)
+{
+    int fijas = 0;
+    int longitud = strlen(codigoJugador);
+
+    for (int i = 0; i < longitud; i++)
+    {
+        if (codigoJugador[i] == codigoOponente[i])
+        {
+            fijas++;
+        }
+    }
+
+    return fijas;
+}
+
+void enviar(int socket, const char *mensaje){
+    write(sock_servicio[socket], mensaje, strlen(mensaje));
+}
+
+char mensajecode[8094];
+
 int picasyfijas(){
     int validado=0; 
     validado=validarNumJugadores();
@@ -172,19 +215,28 @@ int picasyfijas(){
                 turno_desbloqueado=0;
                 mturno = validarTurno();
                 const char *mensaje_turno = "6";
-                write(sock_servicio[mturno], mensaje_turno, strlen(mensaje_turno));
+                enviar(mturno, mensaje_turno);
+                //write(sock_servicio[mturno], mensaje_turno, strlen(mensaje_turno));
 
                 // Leer el código del cliente
                 char line[MAXLINE];
                 int m = read(sock_servicio[mturno], line, MAXLINE - 1);
                 line[m] = '\0';
                 printf("El jugador %s ingresó el código: %s\n", jugadores[mturno].nombre, line);
+                for (m=0;m<4;m++){
+                    if(m!=mturno){                  
+                        jugadores[m].picas=calcularPicas(line, jugadores[m].codigo);
+                        jugadores[m].fijas=calcularFijas(line, jugadores[m].codigo);
+                        printf("has tenido %d picas y %d fijas con el jugador %s\n",jugadores[m].picas,jugadores[m].fijas,jugadores[m].nombre);
+                    }
+                }
                 
-                const char *mensaje = "A";
-                for (m=0;m<4;m++)
-                    write(sock_servicio[m], mensaje, strlen(mensaje));
-
-            
+                sprintf(mensajecode, "el jugador %s puso el codigo %s", jugadores[mturno].nombre, line);
+                for (m=0;m<4;m++){
+                    if(m!=mturno){
+                        write(sock_servicio[m], mensajecode, strlen(mensajecode));
+                    }
+                }
             }
 
             const char *mensaje_turno = "0";
