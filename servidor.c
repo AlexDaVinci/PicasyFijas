@@ -30,6 +30,8 @@ struct Jugador
 {
     char nombre[MAX_NOMBRE];
     char codigo[MAX_CODIGO];
+    int perdio;
+    int posiperdio;
     int picas;
     int fijas;
     int turno;
@@ -159,7 +161,14 @@ int validarTurno(){
     for(int i=0; i<MAX_JUGADORES; i++){
         if(jugadores[i].turno==rturno){
             return i;
-        }
+            break;
+        }else if(jugadores[i].turno==0){
+            if(rturno==4){
+                rturno=1;
+            }else{
+                rturno++;
+            }
+        }       
     }
 }
 
@@ -201,10 +210,13 @@ int calcularFijas(const char *codigoJugador, const char *codigoOponente)
 void enviar(int socket, const char *mensaje){
     write(sock_servicio[socket], mensaje, strlen(mensaje));
 }
-
+char mensajeeli[8094];
+char mensajeran[8094];
 char mensajecode[8094];
 char mensajepf[8094];
-
+int contadorfinal=0;
+int ranking=4;
+int bandera=1;
 int picasyfijas(){
     int validado=0; 
     validado=validarNumJugadores();
@@ -214,15 +226,21 @@ int picasyfijas(){
         while (1) {
             if (turno_desbloqueado) {
                 turno_desbloqueado=0;
+                for(int i=0;i<4;i++){
+                    if(jugadores[i].perdio==1){
+                        jugadores[i].turno=0;
+                    }
+                }
                 mturno = validarTurno();
-                for (m=0;m<4;m++){
+
+                for (m=0;m<4;m++){                
                     if(m!=mturno){
                         const char *mensaje_turno = "1";
-                         enviar(m, mensaje_turno);
+                        enviar(m, mensaje_turno);
                     }else{
                         const char *mensaje_turno = "6";
                         enviar(mturno, mensaje_turno);
-                    }
+                    } 
                 }                
                 //write(sock_servicio[mturno], mensaje_turno, strlen(mensaje_turno));
                 // Leer el código del cliente
@@ -240,15 +258,48 @@ int picasyfijas(){
                 }
 
                 for (m=0;m<4;m++){
-                    if(m!=mturno){                  
-                        jugadores[m].picas=calcularPicas(line, jugadores[m].codigo);
-                        jugadores[m].fijas=calcularFijas(line, jugadores[m].codigo);
-                        printf("%s ha tenido %d picas y %d fijas con el jugador %s\n",jugadores[mturno].nombre,jugadores[m].picas,jugadores[m].fijas,jugadores[m].nombre);
-                        sprintf(mensajepf, "%s ha tenido %d picas y %d fijas con el jugador %s\n",jugadores[mturno].nombre,jugadores[m].picas,jugadores[m].fijas,jugadores[m].nombre);
-                        write(sock_servicio[m], mensajepf, strlen(mensajepf));
-                        write(sock_servicio[mturno], mensajepf, strlen(mensajepf));
+                    if(m!=mturno){
+                        if(jugadores[m].turno!=0){
+                            jugadores[m].picas=calcularPicas(line, jugadores[m].codigo);
+                            jugadores[m].fijas=calcularFijas(line, jugadores[m].codigo);
+                            printf("%s ha tenido %d picas y %d fijas con el jugador %s\n",jugadores[mturno].nombre,jugadores[m].picas,jugadores[m].fijas,jugadores[m].nombre);
+                            sprintf(mensajepf, "%s ha tenido %d picas y %d fijas con el jugador %s",jugadores[mturno].nombre,jugadores[m].picas,jugadores[m].fijas,jugadores[m].nombre);
+                            write(sock_servicio[m], mensajepf, strlen(mensajepf));
+                            write(sock_servicio[mturno], mensajepf, strlen(mensajepf));
+                            if(jugadores[m].fijas==4){
+                                jugadores[m].perdio=1;
+                                jugadores[m].posiperdio=ranking;
+                                contadorfinal++;
+                                ranking--;
+                                printf("El jugador %s perdio por tanto perdio=%d\n",jugadores[m].nombre,jugadores[m].perdio);
+                                sprintf(mensajeeli, "El jugador %s a eliminado a %s",jugadores[mturno].nombre,jugadores[m].nombre);
+                                write(sock_servicio[m], mensajeeli, strlen(mensajeeli));
+                                write(sock_servicio[mturno], mensajeeli, strlen(mensajeeli));
+                            }                           
+                        }                 
+                    }                
+                }
+                if(contadorfinal==3){
+                    for(int i=0;i<4;i++){
+                        if(jugadores[i].perdio!=1){
+                            jugadores[i].posiperdio=ranking;
+                        }
+                        const char *mensajeacabo="EL JUEGO HA FINALIZADO";
+                        write(sock_servicio[i], mensajeacabo, strlen(mensajeacabo));
+                        const char *mensajeranki="----------RANKING--------";                     
+                        write(sock_servicio[i], mensajeranki, strlen(mensajeranki));
                     }
-                    
+                    for(int i=0;i<4;i++){
+                        if(jugadores[i].posiperdio==bandera){
+                            sprintf(mensajeran, "%d. puesto: %s",i, jugadores[i].nombre);                        
+                        }
+                        for(int m=0;m<4;m++){
+                            write(sock_servicio[m], mensajeran, strlen(mensajeran)); 
+                        }  
+                        bandera++;
+                    }
+                    while(1){      
+                    }
                 }
 
             }
