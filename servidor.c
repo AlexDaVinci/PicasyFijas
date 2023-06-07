@@ -25,7 +25,7 @@ pthread_mutex_t semaforo, semaforo2;
 int hilos = 0;
 int validar = 1;
 int rturno=0;
-
+int pos=-1;
 struct Jugador
 {
     char nombre[MAX_NOMBRE];
@@ -110,6 +110,9 @@ int validarNumJugadores() {
 
 const char *mensaje_Inicio = "Jugadores completos, el juego ha iniciado\n";
     int contador = 0;
+    int numero=0;
+    int aux;
+    struct Jugador j;
     for (int i = 0; i < MAX_JUGADORES; i++)
     {
         if (strlen(jugadores[i].codigo)==4)
@@ -120,12 +123,24 @@ const char *mensaje_Inicio = "Jugadores completos, el juego ha iniciado\n";
 
     if (contador == 4)
     {
+        for (int i=0;i<MAX_JUGADORES;i++)
+        {
+            numero = rand() % 4;
+            aux=sock_servicio[i];
+            sock_servicio[i]=sock_servicio[numero];
+            sock_servicio[numero]=aux;
+            j=jugadores[i];
+            jugadores[i]=jugadores[numero];
+            jugadores[numero]=j;
+
+        }
         for(int o=0; o<MAX_JUGADORES; o++){
 
             write(sock_servicio[o], mensaje_Inicio, strlen(mensaje_Inicio));
         }
         return 1;
     }
+
 }
 
 
@@ -153,10 +168,15 @@ void asignarTurno(int posicion)
 }
 
 int validarTurno() {
-    static int rturno = 0;
-    int i = 0;
-
-    if (rturno == 4) {
+    //static int rturno = 0;
+    int i;
+    do{
+    pos++;
+    pos=pos%4;
+    }
+    while (jugadores[pos].perdio==1);
+    return pos;
+/*    if (rturno == 4) {
         rturno = 1;
     } else {
         rturno++;
@@ -178,7 +198,7 @@ int validarTurno() {
         } else {
             i = 0;
         }
-    }
+    }*/
 }
 
 int calcularPicas(const char *codigoJugador, const char *codigoOponente)
