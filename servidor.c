@@ -152,23 +152,32 @@ void asignarTurno(int posicion)
     }
 }
 
-int validarTurno(){
-    if(rturno==4){
-        rturno=1;
-    }else{
+int validarTurno() {
+    static int rturno = 0;
+    int i = 0;
+
+    if (rturno == 4) {
+        rturno = 1;
+    } else {
         rturno++;
     }
-    for(int i=0; i<MAX_JUGADORES; i++){
-        if(jugadores[i].turno==rturno){
+
+    while (1) {
+        if (jugadores[i].turno == rturno) {
             return i;
             break;
-        }else if(jugadores[i].turno==0){
-            if(rturno==4){
-                rturno=1;
-            }else{
+        } else if (jugadores[i].turno == 0) {
+            if (rturno == 4) {
+                rturno = 1;
+            } else {
                 rturno++;
             }
-        }       
+        }
+        if (i < 4) {
+            i++;
+        } else {
+            i = 0;
+        }
     }
 }
 
@@ -280,25 +289,32 @@ int picasyfijas(){
                     }                
                 }
                 if(contadorfinal==3){
+                    int i=0;
                     for(int i=0;i<4;i++){
                         if(jugadores[i].perdio!=1){
                             jugadores[i].posiperdio=ranking;
                         }
                         const char *mensajeacabo="EL JUEGO HA FINALIZADO";
                         write(sock_servicio[i], mensajeacabo, strlen(mensajeacabo));
-                        const char *mensajeranki="----------RANKING--------";                     
+                        const char *mensajeranki="\n----------RANKING--------";                     
                         write(sock_servicio[i], mensajeranki, strlen(mensajeranki));
                     }
-                    for(int i=0;i<4;i++){
+                    while(bandera<5){
                         if(jugadores[i].posiperdio==bandera){
-                            sprintf(mensajeran, "%d. puesto: %s",i, jugadores[i].nombre);                        
+                            sprintf(mensajeran, "* %s", jugadores[i].nombre);  
+                            bandera++;    
+                            for(int m=0;m<4;m++){
+                                write(sock_servicio[m], mensajeran, strlen(mensajeran)); 
+                            }                             
                         }
-                        for(int m=0;m<4;m++){
-                            write(sock_servicio[m], mensajeran, strlen(mensajeran)); 
-                        }  
-                        bandera++;
+                        if(i<4){
+                            i++;
+                        }else{
+                            i=0;
+                        }   
                     }
-                    while(1){      
+                    while(1){ 
+
                     }
                 }
 
