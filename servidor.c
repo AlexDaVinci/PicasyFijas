@@ -279,7 +279,7 @@ int picasyfijas(){
                 printf("El jugador %s ingresó el código: %s\n", jugadores[mturno].nombre, line);
 
                                 
-                sprintf(mensajecode, "el jugador %s puso el codigo %s", jugadores[mturno].nombre, line);
+                sprintf(mensajecode, "el jugador %s puso un codigo", jugadores[mturno].nombre);
                 for (m=0;m<4;m++){
                     if(m!=mturno){
                         write(sock_servicio[m], mensajecode, strlen(mensajecode));
