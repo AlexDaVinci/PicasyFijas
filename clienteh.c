@@ -86,6 +86,7 @@ int main(int argc, char *argv[])
 
     for (;;) {
         int error=0;
+        bzero(recvline, MAXLINE);
         n = read(sock, recvline, MAXLINE - 1);
         recvline[n] = '\0';
         
@@ -99,7 +100,6 @@ int main(int argc, char *argv[])
             printf("%s\n",recvline);
         }
         n=0;
-        bzero(recvline, MAXLINE);
     }
 
     return 0;
