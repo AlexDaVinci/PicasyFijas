@@ -267,8 +267,8 @@ int picasyfijas(){
                         const char *mensaje_turno = "2";
                         enviar(m, mensaje_turno);
                     }else{
-                        const char *mensaje_turno = "6";
-                        enviar(mturno, mensaje_turno);
+                        const char *mensaje_juego = "6";
+                        enviar(mturno, mensaje_juego);
                     } 
                 }                
                 //write(sock_servicio[mturno], mensaje_turno, strlen(mensaje_turno));
