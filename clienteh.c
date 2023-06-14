@@ -99,7 +99,7 @@ int main(int argc, char *argv[])
             printf("%s\n",recvline);
         }
         n=0;
-        bzero(revline, MAXLINE);
+        bzero(recvline, MAXLINE);
     }
 
     return 0;
