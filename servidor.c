@@ -264,7 +264,7 @@ int picasyfijas(){
 
                 for (m=0;m<4;m++){                
                     if(m!=mturno){
-                        const char *mensaje_turno = "1";
+                        const char *mensaje_turno = "2";
                         enviar(m, mensaje_turno);
                     }else{
                         const char *mensaje_turno = "6";
@@ -292,7 +292,7 @@ int picasyfijas(){
                             jugadores[m].picas=calcularPicas(line, jugadores[m].codigo);
                             jugadores[m].fijas=calcularFijas(line, jugadores[m].codigo);
                             printf("%s ha tenido %d picas y %d fijas con el jugador %s\n",jugadores[mturno].nombre,jugadores[m].picas,jugadores[m].fijas,jugadores[m].nombre);
-                            sprintf(mensajepf, "%s ha tenido %d picas y %d fijas con el jugador %s",jugadores[mturno].nombre,jugadores[m].picas,jugadores[m].fijas,jugadores[m].nombre);
+                            sprintf(mensajepf, "\n%s ha tenido %d picas y %d fijas con el jugador %s\n",jugadores[mturno].nombre,jugadores[m].picas,jugadores[m].fijas,jugadores[m].nombre);
                             write(sock_servicio[m], mensajepf, strlen(mensajepf));
                             write(sock_servicio[mturno], mensajepf, strlen(mensajepf));
                             if(jugadores[m].fijas==4){

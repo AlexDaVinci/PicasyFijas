@@ -94,11 +94,12 @@ int main(int argc, char *argv[])
             printf("Es su turno ");
             solicitarNumero(numero);
             write(sock, numero, strlen(numero));
-        }else if(error==1){
+        }else if(error==2){
             printf("En espera\n");
         }else{
             printf("%s\n",recvline);
         }
+        n=0;
     }
 
     return 0;
