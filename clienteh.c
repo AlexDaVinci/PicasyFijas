@@ -89,11 +89,11 @@ int main(int argc, char *argv[])
         n = read(sock, recvline, MAXLINE - 1);
         recvline[n] = '\0';
         
-        if (recvline == "6") {
+        if (recvline[0] == '6') {
             printf("Es su turno ");
             solicitarNumero(numero);
             write(sock, numero, strlen(numero));
-        }else if(recvline == "2"){
+        }else if(recvline[0] == '2'){
             printf("En espera\n");
         }else{
             printf("%s\n",recvline);
