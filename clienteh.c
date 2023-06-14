@@ -88,13 +88,12 @@ int main(int argc, char *argv[])
         int error=0;
         n = read(sock, recvline, MAXLINE - 1);
         recvline[n] = '\0';
-        error = atoi(recvline);
         
-        if (error == 6) {
+        if (recvline == "6") {
             printf("Es su turno ");
             solicitarNumero(numero);
             write(sock, numero, strlen(numero));
-        }else if(error==2){
+        }else if(recvline == "2"){
             printf("En espera\n");
         }else{
             printf("%s\n",recvline);
